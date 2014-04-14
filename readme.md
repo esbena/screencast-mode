@@ -3,7 +3,7 @@ screencast-mode
 
 An Emacs mode for programming screencasts of Emacs usage.
 
-The screenast-mode.el is self-documenting just load it in Emacs, and type
+The [screenast-mode.el](screenast-mode.el) is self-documenting just load it in Emacs, and type
 
 ```
 M-x screencast-screencast-producer
@@ -24,16 +24,16 @@ M-x screencast-screencast-user
 
 * the screencasts will fail if Emacs is missing the described mode
 
-* example screencasts are available in /screencasts
+* example screencasts are available in [/screencasts](screencasts)
 
-* example screencasts have been uploaded to YouTube as well, ex.: https://www.youtube.com/watch?v=WEEuaN62hNI
+* example screencasts have been uploaded to YouTube as well, ex.: [graphviz-dot-mode at YouTube](https://www.youtube.com/watch?v=WEEuaN62hNI)
 
 --------------------------------
 
 screencast-record
 =================
 
-screencast-record.el can record a video of the screencasts. 
+[screencast-record.el](screencast-record.el) can record a video of the screencasts. 
 
 You can try it out by loading the file and evaluating the following:
 
@@ -54,10 +54,6 @@ screencast-record-font
 
 screencast-record.el depends on the following external programs:
 
-* recordmydesktop (http://recordmydesktop.sourceforge.net/about.php)
+* [recordmydesktop](http://recordmydesktop.sourceforge.net/about.php): for recording the emacs window 
 
-  - for recording the emacs window 
-
-* wmctrl (http://tripie.sweb.cz/utils/wmctrl/)
-
-  - for fetching the name of the emacs window, and handing it to recordmydesktop
+* [wmctrl](http://tripie.sweb.cz/utils/wmctrl/): for fetching the name of the emacs window, and handing it to recordmydesktop
