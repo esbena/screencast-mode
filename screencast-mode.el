@@ -424,12 +424,7 @@ The speech speed depends on the typing speed (`screencast-speed-relation-speech-
     (shell-command "while [ `pgrep festival` ] ; do sleep 0.1; done;")
     (sit-for 0.1))                      ; needed
   )
-
-(defun screencast-insert-with-delay (string &optional nopause)
-  "Inserts STRING with a delay between each character.
-If NOPAUSE is non-nil, the delay will be 0.
-
-The pause between each character is given by `screencast-pause-char-length'."
+(defun screencast-insert-string-with-delay (string &optional nopause)
   (let ((string (screencast-strip-newlines-and-normalize-whitespace string)))
     (screencast-speech-start string nopause)
     (let ((l (string-to-list string)))
@@ -446,6 +441,24 @@ The pause between each character is given by `screencast-pause-char-length'."
     (screencast-speech-wait-for nopause)
     )
   )
+
+(defun screencast-insert-with-delay (strings &optional nopause)
+  "Inserts STRINGS with a delay between each character.
+If NOPAUSE is non-nil, the delay will be 0.
+
+The pause between each character is given by `screencast-pause-char-length'."
+  (if (stringp strings)
+      (screencast-insert-string-with-delay strings nopause)
+    (if (and (listp strings) strings)
+        (progn
+          (screencast-insert-string-with-delay (car strings) nopause)
+          (screencast-insert-with-delay (cdr strings) nopause)
+          )
+      ()
+      )
+    )
+  )
+
 
 (defun screencast-strip-newlines-and-normalize-whitespace (string)
   "Replaces all newlines and tabs in STRING by a single
