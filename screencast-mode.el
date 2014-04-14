@@ -442,22 +442,25 @@ The speech speed depends on the typing speed (`screencast-speed-relation-speech-
     )
   )
 
-(defun screencast-insert-with-delay (strings &optional nopause)
+(defun screencast-insert-with-delay (to-insert &optional nopause)
   "Inserts STRINGS with a delay between each character.
 If NOPAUSE is non-nil, the delay will be 0.
 
 The pause between each character is given by `screencast-pause-char-length'."
-  (if (stringp strings)
-      (screencast-insert-string-with-delay strings nopause)
-    (if (and (listp strings) strings)
-        (progn
-          (screencast-insert-string-with-delay (car strings) nopause)
-          (screencast-insert-with-delay (cdr strings) nopause)
-          )
-      ()
-      )
-    )
+  (cond
+   ((eq nil to-insert))
+   ((symbolp to-insert)
+    (screencast-insert-special-symbol to-insert))
+   ((stringp to-insert)
+    (screencast-insert-string-with-delay to-insert nopause))
+   ((listp to-insert)
+    (progn
+      (screencast-insert-with-delay (car to-insert) nopause)
+      (screencast-insert-with-delay (cdr to-insert) nopause)
+      ))
+   )
   )
+
 
 
 (defun screencast-strip-newlines-and-normalize-whitespace (string)
@@ -530,7 +533,25 @@ screencasts version number to try it out.")))
     (toggle-read-only 1)
     )
   )
-
+(defun screencast-insert-special-symbol (c)
+  (cond
+   ((eq 's c)                     ; step
+    (screencast-newline-only-once)
+    (insert "Step " (number-to-string screencast-step-number) ":")
+    (screencast-fontify-step-region)
+    )
+   ((eq 'l c)                     ; line
+    (screencast-line))
+   ((eq 'n c)                     ; newline
+    (newline))
+   ((eq 'p c)                     ; pause 
+    (screencast-pause-maybe nopause))
+   ((eq 'b c)                     ; break
+    (screencast-make-break nopause)
+    )
+   (t
+    (error (concat "Screencast-internal encountered an error: Unknown symbol: " (symbol-name c)))))
+  )
 (defun screencast-internal (list command-buffer beginat)
   "The internal version of screencast, refer to the documentation string
     there."
@@ -555,23 +576,7 @@ screencasts version number to try it out.")))
       (cond
        ((symbolp c)
         ;; special symbols
-        (cond
-         ((eq 's c)                     ; step
-          (screencast-newline-only-once)
-          (insert "Step " (number-to-string screencast-step-number) ":")
-          (screencast-fontify-step-region)
-          )
-         ((eq 'l c)                     ; line
-          (screencast-line))
-         ((eq 'n c)                     ; newline
-          (newline))
-         ((eq 'p c)                     ; pause 
-          (screencast-pause-maybe nopause))
-         ((eq 'b c)                     ; break
-          (screencast-make-break nopause)
-          )
-         (t
-          (error (concat "Screencast-internal encountered an error: Unknown symbol: " (symbol-name c)))))
+        (screencast-insert-special-symbol c)
         )
        ((listp c)
         ;; function
