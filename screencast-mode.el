@@ -75,6 +75,8 @@
   "When this is correctly adjusted, speech and typing should end
 at the same time. Lower values means faster speech.")
 ;;;; BEGIN USER VARIABLES
+(defvar screencast-use-message-buffer t "Should the message buffer be used at all?")
+
 (defvar screencast-pause-length 2 "The length of a pause ('p) in the screencast")
 
 (defvar screencast-pause-char-length 0.12
@@ -201,7 +203,9 @@ screencast."
   ;; we want to start an 'inner screencast', but the current buffer is the
   ;; command-buffer, and the expected starting buffer is the
   ;; screencast-message-buffer
-  (pop-to-buffer (get-buffer screencast-message-buffer-name))
+  (if screencast-message-buffer
+      (pop-to-buffer (get-buffer screencast-message-buffer-name))
+    )
   (screencast-internal list 
                        (get-buffer command-buffer-name)
                        screencast-producer-beginat)
@@ -503,20 +507,26 @@ screencasts version number to try it out.")))
                                            screencast-pause-command-length
                                            screencast-speed))
          ;; buffers
-         (message-buffer (buffer-recreate screencast-message-buffer-name))
-         (command-buffer (if (string= command-buffer-name 
-                                      screencast-message-buffer-name)
-                             message-buffer
-                           (buffer-recreate command-buffer-name)))
+         (message-buffer (if screencast-use-message-buffer (buffer-recreate screencast-message-buffer-name)))
+         (command-buffer (if (or (not screencast-use-message-buffer) 
+                                 (string= command-buffer-name 
+                                          screencast-message-buffer-name)
+                                 message-buffer)
+                             (buffer-recreate command-buffer-name)))
          ;; numbers
          (screencast-step-number 0)
          (beginat (if beginat
                       beginat
                     0)))
     (delete-other-windows)
-    (split-window-horizontally)
-    (switch-to-buffer message-buffer)
-    (pop-to-buffer message-buffer)
+    (if screencast-use-message-buffer
+        (progn (split-window-horizontally)
+               (switch-to-buffer message-buffer)
+               (pop-to-buffer message-buffer)
+               )
+      (switch-to-buffer command-buffer)
+      (pop-to-buffer command-buffer)
+      )
     (display-buffer command-buffer)
     (screencast-mode)
     (toggle-read-only 0)
@@ -569,20 +579,25 @@ screencasts version number to try it out.")))
     (let ((nopause
            (if (>= screencast-step-number beginat)
                nil
-             t)))
+             t))
+          )
       ;; producer variables        
       (setq screencast-producer-nopause nopause) 
       (setq screencast-producer-step-number screencast-step-number) 
       (cond
        ((symbolp c)
         ;; special symbols
-        (screencast-insert-special-symbol c)
+        (if screencast-use-message-buffer
+            (screencast-insert-special-symbol c)
+          )
         )
        ((listp c)
         ;; function
         (progn
           (unless (member (car c) screencast-dont-print-list) ; these need no print
-            (screencast-show-command (car c) screencast-step-number command-buffer)
+            (if screencast-use-message-buffer
+                (screencast-show-command (car c) screencast-step-number command-buffer)
+              )
             )
           (unless nopause     
             (screencast-pause-maybe nopause screencast-pause-command-length) ; pause
@@ -599,12 +614,20 @@ screencasts version number to try it out.")))
               ;; save excursion style which allows for inner screencasts
               (pop-to-buffer command-buffer)
               (eval c)
-              (pop-to-buffer screencast-message-buffer-name)))
-          (pop-to-buffer screencast-message-buffer-name) ; needed to regain real focus!
+              (if screencast-use-message-buffer
+                  (pop-to-buffer screencast-message-buffer-name)
+                )
+              )
+            )
+          (if screencast-use-message-buffer
+              (pop-to-buffer screencast-message-buffer-name) ; needed to regain real focus!
+            )
           ))
        ((stringp c)
         ;; it's a string - instert it.
-        (screencast-insert-with-delay c nopause))
+        (if screencast-use-message-buffer
+            (screencast-insert-with-delay c nopause)
+          ))
        (t
         (error (concat "I don't know what to do with element:" c)))
        )
